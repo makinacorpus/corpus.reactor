@@ -588,38 +588,6 @@ Authenticated and distant call
 
   For now size is not configurable and will be fixed at 5gb
 
-API
-----------
-+---------------------------+-------------------------------+
-|  host                     |   host_guests                 |
-|      host(uuid)           |      host(uuid)               |
-|      ip                   |      guest_type               |
-|      port                 |      max                      |
-|      ssh_user             |                               |
-|      sudo                 |                               |
-|      password             |                               |
-|      guests_type          |                               |
-+---------------------------+-------------------------------+
-|  guest                    |   guest_type                  |
-|      guest(uuid)          |       type                    |
-|      label                |       label                   |
-|      name                 |                               |
-|      host(uuid)           |                               |
-|                           |                               |
-|  moved_guests             |                               |
-|      old_host(uuid)       |                               |
-|      new_host(uuid)       |                               |
-|                           |                               |
-|  guest_private_ips        |                               |
-|      guestid              |                               |
-|      private_ip           |                               |
-|                           |                               |
-|  guest_public_ips         |                               |
-|      guestid              |                               |
-|      public_ip            |                               |
-|                           |                               |
-|                           |                               |
-+---------------------------+-------------------------------+
 
 .. _heroku: https://devce|-ter.heroku.com/articles/buildpack-api
 .. _openshift: https://www.openshift.com/developers/deploying-and-building-applications

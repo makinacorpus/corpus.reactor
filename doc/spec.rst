@@ -1,82 +1,107 @@
-Manage a project within makina-states - RFC
-============================================
-
-A bit of history, the first primitive layout
--------------------------------------------------
-The initial layout was as follow::
-
-|- /srv/pillar/top.sls
-|- /srv/salt/top.sls
-|- /srv/salt/makina-projects/myproject -> /srv/projects/myproject/salt
-|- /srv/salt/makina-projects/myproject/top.sls -> /srv/projects/myproject/salt/top.sls
-|- /srv/pillar/makina-projects/myproject -> /srv/projects/myproject/pillar
-|- /srv/pillar/makina-projects/myproject/init.sls ->  /srv/projects/myproject/pillar/init.sls
-|- /srv/projects/myproject/salt (salt branch )
-|- /srv/projects/myproject/project (project branch)
-|- /srv/projects/myproject/pillar (pillar)
-|- /srv/projects/myproject/pillar/init.sls -> either a link to or a copy to regular file from /srv/projects/myproject/salt/PILLAR.sample.sls.
-
+corpus, the PaaS Platform -  RFC
+==================================
 
 The origin
 ------------
+Nowoday no one of the P/I/S/aaS existing platforms fit our needs and habits.
+No matter of the gret quality of docker, heoru or openshift, they did'nt make it.
+And, really, those software are great, they inspired corpus a lot !
 
-Nowoday no one of the P/I/S/aaS and custom free or even non-free PaaS platforms give
-us no lockin' and use the underlying technologies we wanted to.
+For exemple, this is not a critisism at all, but that's why we were not enougth
+to choose one of those platforms (amongst all of the others):
+
+    `heroku`_
+
+        non free
+
+    `docker`_
+
+        - Not enougth stable yet
+        - do not implement all of our needs, it is more tied to the 'guest' part
+          (see next paragraphs)
+        - But ! Will certainly replace the LXC guests driver in the near future.
+
+    `openshift`_
+        Tied to SElinux and RedHat (we are more on the Debian front ;)).
+        However, its great design inspired a lot of the corpus one.
+
+The needs
+----------
 That's why we created a set of tools to build the best flexible PaaS platform
 ever.
 
-Indeed, we want more a CloudController is making my projects install
-on any kind of compute nodes smoothly and flawlessly.
-We don't want any PaaS platform which will put use in some sort of lockin.
-We prefer a generic deployment solution that scale.
-This solution will then help us to build a controller which can be switched
-onto a new **project hosting** solution  more easily.
-For us, the platform must then fit relativly those every days  goals:
+- Indeed, what we want is more of a CloudController + ToolBox + Dashboards +
+  API.
+- This one will be in charge of making projects install any kind of compute nodes
+  smoothly and flawlessly.
+- Those projects will never ever be installed directly on compute nodes but rather
+  be isolated.
 
-    - Orchestrate multiple clouds to host projects.
-      This include a combination of:
+    - They will be isolated primarly by isolation-level virtualisation
+      systems (LXC, docker, VServer)
+    - Bue it can also be plain VMs (KVM, Xen).
 
-        - network (<l3)
-        - DNS
-        - operationnal supervision
-        - Security
-        - storage
-        - user management
-        - baremetal machines
-        - hybrid clouds
-        - public clouds
-        - VMs
-        - containers (vserver, LXC, docker)
+- We don't want any PaaS platform which will put use in some sort of lockin.
+- We prefer a generic deployment solution that scale, and better AUTOSCALE !
+- All the glue making the configuration must be centralized and automatically
+  orchestrated.
+- This solution must not be tied to a specific compute node type (baremetal,
+  EC2)nor a guest driver type (LXC, docker, XEN).
+- Corrolary, the **low level** daily tasks consists in managment of:
 
-    - Eventually orchestrate projects on that infrastructure
+    - network (<OSI L3)
+    - DNS
+    - Mail
+    - operationnal supervision
+    - Security, IDS & Firewalling
+    - storage
+    - user management
+    - baremetal machines
+    - hybrid clouds
+    - public clouds
+    - VMs
+    - containers (vserver, LXC, docker)
+    - operationnal supervision
 
-        - installation
-        - upgrade
-        - continenous delivery
-        - intelligent statistic delivery & dashboards
-        - backups
-        - autoscale
+- Eventually, on top of that  orchestrate projects on that infrastructure
+
+    - installation
+    - upgrade
+    - continenous delivery
+    - intelligent test reports, deployment reports, statistic, delivery & supervision dashboards
+    - backups
+    - autoscale
 
 Here is for now the pieces or technologies we are planning or already using to
 achieve all of those goals:
 
 - Developer environments
 
-  - makina-corpus/vms + mcorpus.reator + makina-states
-
+  - makina-corpus/vms + mcorpus.reator + makina-corpus/makina-states +
+    saltstack/salt
 
 - Bare metal machines provision
 
-  - salt.cloud saltify + makina-states
+  - salt.cloud saltify + makina-states + saltstack
+  - Ubuntu server
 
-- VMs
+- VMs (guests)
 
-    - lxc-utils LXC containers
+    - lxc-utils LXC containers + makina-states + saltstack
 
 - DNS:
 
-    - powerdns: dynamic  managment of all DNS zones
-    - bind: local cache dns servers
+    - makina-states + powerdns: dynamic  managment of all DNS zones
+    - makina-states + bind: local cache dns servers
+
+- Filesystem Backup
+
+    - rdiff-backup (legacy)
+    - bacula and/or burp (future)
+
+- Database backup
+
+  - `db_smart_backup <https://github.com/kiorky/db_smart_backup>`_
 
 - Network:
 
@@ -84,12 +109,17 @@ achieve all of those goals:
 
 - Logs, stats:
 
-    - logstash
+    - logstash + kibana
     - graphite
 
 - operationnal supervision
 
-    - icinga2
+    - centreon (legacy)
+    - icinga2 (future)
+
+- Mail
+
+    - postfix
 
 - User managment
 
@@ -97,10 +127,12 @@ achieve all of those goals:
 
 - Security
 
-    - shorewall
+    - shorewall, psad & so on
 
 - CloudController
 
+    - powerdns
+    - makina-states
     - mastersalt
     - salt.cloud
     - corpus.web + corpus.reactor
@@ -111,10 +143,21 @@ achieve all of those goals:
 
 - autoscale
 
-    - corpus.reactor
+    - corpus.reactor + salt.cloud + makina-states
 
 The whole idea
 ----------------------
+The basic parts of corpus PaaS platform:
+
+    - The cloud controller
+    - The cloud controller client applications
+    - The compute nodes
+
+        - Where are hosted guests
+
+            - Where projects run on
+
+
 The first thing we will have is a classical makina-states installation in
 mastersalt mode.
 We then will have salt cloud as a cloud controller to control compute nodes
@@ -169,7 +212,7 @@ In most cases building things on the production nodes is really a bad idea and e
 We handle this by providing a simili PAAS approach were we assemble artifacts to produce production ready deliverables.
 Those artifacts will be able to run directly on production environments minus little provisionning, reonfiguration and upgrade paths
 This is non so far from an **-extract-and-run-**.
-For this, we inspired ouselves a lot from openshift_ and heroku_ (custom buildpacks) models.
+For this, we inspired ouselves a lot from openshift_ and dheroku_ (custom buildpacks) models.
 
 Actual layout
 -------------
@@ -892,11 +935,11 @@ List for a specific compute node tenant
 
 - corpus guest_delete <API_ENDPOINT> <guest_id>
 
-    Delete a guest
+  Delete a guest
 
 - corpus project_destroy <API_ENDPOINT> <UUID_ENV> <project>
 
-    Destroys and free any project resources on a located endpoint
+  Destroys and free any project resources on a located endpoint
 
 - corpus trim <API_ENDPOINT> <UUID_ENV> <guest> <size>
 
@@ -908,5 +951,7 @@ List for a specific compute node tenant
 
 For now size is not configurable and will be fixed at 5gb
 
-.. _heroku: https://devce|-ter.heroku.com/articles/buildpack-api
+.. _docker:  http://docker.io
+.. _heroku: http://heroku.com/
+.. _dheroku: https://devcenter.heroku.com/articles/buildpack-api
 .. _openshift: https://www.openshift.com/developers/deploying-and-building-applications

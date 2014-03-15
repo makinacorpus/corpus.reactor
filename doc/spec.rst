@@ -836,26 +836,56 @@ without the project runner**
 Indeed, we inject in those sls contextes a special **cfg** variable which is the
 project configuration.
 
-We have two sets of sls
+- We have two sets of sls
 
-    - set of sls providen by an **installer**
+    - The set of sls providen by an **installer**
+    - The set of sls providen by the project itself in the .salt directory
 
-        This set can be either
+- Each sls must exists even if empty.
+- Each sls must respect this minimum convention::
 
-        an official makina-states on
-            found in the makina-states/projects/<apiver> folder
+    {% macro do() %}
+    {# state write here #}
+    {% endmacro %}
+    {{do()}}
 
-        an absolute path referenced one
-            /path/to/my/installer
+- Some of the official installers:
 
-        a shipped via the salt install itself one (in a subdirectory)
-            path/to/my/installer -> project/.salt/path/to/my/installer
+    empty
+        all of the sls are empty: useful to make a custom from scratch
+        installer
+    generic
+      base sls used by all other macros
+    zope (to be upgraded to apiv2)
+      plone+zope portal based  on generic webbuilder installer
+    ODE(to be upgraded to apiv2)
+      ODE project integration
+    apache + fpm(to be upgraded to apiv2)
+      apache + fpm based project
+    beecollab(to be upgraded to apiv2)
+      beecollab integration project
+    Lizmap(to be upgraded to apiv2)
+      apache + fpm based lizmap integration project
 
+Project initialisation
+-----------------------
 
-    - set of sls providen by the **project**
+You will need in prerequisites:
 
-Each sls must exists even if empty.
+    - 2 git repositories to contain your project and your pillar
+    - A development VM based on makina-corpus/vms
 
+A new project initialisation on a developpment box  can be done as follow::
+
+    salt-call -lall mc_project.init_project <NAME> url=<GIT_URL> pillar_url=<GIT_PILLAR_URL>
+
+When the project is initialized, you can go inside the git repositories and
+commit the stuff that was generated in there:
+
+    - the init.sls in the /srv/projects/project/pillar folder
+    - the .salt directory inside the /srv/projects/project/ folder
+
+You can then push your changes to your central repository (company, github)
 
 CLI Tools
 ---------

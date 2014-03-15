@@ -1,11 +1,13 @@
-corpus, the PaaS Platform -  RFC
-==================================
+corpus, the Glue PaaS Platform -  RFC
+=======================================
 
 The origin
 ------------
 Nowoday no one of the P/I/S/aaS existing platforms fit our needs and habits.
 No matter of the gret quality of docker, heoru or openshift, they did'nt make it.
 And, really, those software are great, they inspired corpus a lot !
+Please note also, that in the long run we certainly and surely integrate those
+as plain **corpus** drivers to install our projects on !
 
 For exemple, this is not a critisism at all, but that's why we were not enougth
 to choose one of those platforms (amongst all of the others):
@@ -25,15 +27,20 @@ to choose one of those platforms (amongst all of the others):
         Tied to SElinux and RedHat (we are more on the Debian front ;)).
         However, its great design inspired a lot of the corpus one.
 
+    `openstack`_
+        Irrelevant and not so incompatible for the PaaS platform, but again
+        we didn't want locking, openstack would lock us in the first place.
+        We want an agnostic PaaS Platform.
+
 The needs
 ----------
 That's why we created a set of tools to build the best flexible PaaS platform
-ever.
+ever. That's why we call that not a PaaS platform but a Glue PaaS Platform :=).
 
 - Indeed, what we want is more of a CloudController + ToolBox + Dashboards +
   API.
 - This one will be in charge of making projects install any kind of compute nodes
-  smoothly and flawlessly.
+  running any kind of VMs smoothly and flawlessly.
 - Those projects will never ever be installed directly on compute nodes but rather
   be isolated.
 
@@ -951,6 +958,7 @@ List for a specific compute node tenant
 
 For now size is not configurable and will be fixed at 5gb
 
+.. _xopenstack:  https://www.openstack.org/
 .. _docker:  http://docker.io
 .. _heroku: http://heroku.com/
 .. _dheroku: https://devcenter.heroku.com/articles/buildpack-api

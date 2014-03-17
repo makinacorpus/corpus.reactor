@@ -827,19 +827,39 @@ mc_project.rollback(name, \*args, \*\*kwargs)
     do the rollback procedure
 
 The project sls interface (APIV2)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Each project must define a set of common sls which will be the interfaced and
 orchestred by the project execution module.
-**The important thing to now is that those special sls files cannot be run
-without the project runner**
+Theses sls follow the aforementionned procedures style.
+
+**The important thing to now remember  is that those special sls files cannot be run
+without the project runner execution module**
 
 Indeed, we inject in those sls contextes a special **cfg** variable which is the
-project configuration.
+project configuration and without we can't deploy correctly.
 
-- We have two sets of sls
+- We have two sets of sls to consider
 
-    - The set of sls providen by an **installer**
+    - The set of sls providen by a makina-states **installer**
+        this is specified at  project creation and stored in configuration for further reference
     - The set of sls providen by the project itself in the .salt directory
+        this is where the user will customize it's deployment steps.
+
+The installer set is then included by default at the first generation of the
+user installer set at the creation of the project.
+
+EG: in .salt/bundle.sls we will have something that looks to::
+
+    include:
+      - makina-states.projects.2.generic.bundle
+    {% macro do() %}
+    {# write your state here #}
+    {% endmacro %}
+    {{do()}}
+
+In other word, the installer variable is only used once, after that the only
+read stuff is in the user installer set. It is the user installer set that will
+include the makina-states installer set !
 
 - Each sls must exists even if empty.
 - Each sls must respect this minimum convention::
@@ -875,9 +895,9 @@ You will need in prerequisites:
     - 2 git repositories to contain your project and your pillar
     - A development VM based on makina-corpus/vms
 
-A new project initialisation on a developpment box  can be done as follow::
+A new project initialisation on a developpment box can be done as follow::
 
-    salt-call -lall mc_project.init_project <NAME> url=<GIT_URL> pillar_url=<GIT_PILLAR_URL>
+    salt-call -lall mc_project.init_project <NAME> url=<URL> pillar_url=<PILLAR_URL> operation_mode=editable
 
 When the project is initialized, you can go inside the git repositories and
 commit the stuff that was generated in there:
@@ -886,6 +906,16 @@ commit the stuff that was generated in there:
     - the .salt directory inside the /srv/projects/project/ folder
 
 You can then push your changes to your central repository (company, github)
+
+Project installation
+-----------------------
+Once the project is initialized, you can deploy it
+This can be done by:
+
+    salt-call -lall mc_project.deploy <NAME> url=<URL> pillar_url=<PILLAR_URL>
+
+If you already did the initilization dance on the same box, you are not obliged
+to specify the urls as they were stored in local configuration.
 
 CLI Tools
 ---------

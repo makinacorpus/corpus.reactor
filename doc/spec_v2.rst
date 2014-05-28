@@ -98,13 +98,13 @@ achieve all of those goals:
 
 - DNS:
 
-    - makina-states + powerdns: dynamic  managment of all DNS zones
-    - makina-states + bind: local cache dns servers
+    - makina-states + bind: local cache dns servers & for the moment dns master
+      for all zones
+    - **FUTURE** makina-states + powerdns: dynamic  managment of all DNS zones
 
 - Filesystem Backup
 
-    - rdiff-backup (legacy)
-    - bacula and/or burp (future)
+    - burp
 
 - Database backup
 
@@ -116,6 +116,7 @@ achieve all of those goals:
 
 - Logs, stats:
 
+    - centreon
     - logstash + kibana
     - graphite
 
@@ -134,7 +135,7 @@ achieve all of those goals:
 
 - Security
 
-    - shorewall, psad & so on
+    - shorewall, psad & so on both on compute node and containers.
 
 - CloudController
 
@@ -194,7 +195,8 @@ Permission accesses
 
 The different environment platforms
 -------------------------------------
-We also want to distinguish at least those 3 environments
+We also want to distinguish at least those 3 environments, so 3 ways for you to
+deploy at least.
 
 :dev: The developper environments (laptop)
 :staging: the stagings and any other QA platform
@@ -210,7 +212,6 @@ The layout and projects implementation  must allow us to
 - In the near future, do warm/live migration
 - Make the development environment easily editable
 - Make the staging environment a production battletest server
-- Make the staging environment a production deliverables producer
 - Production can deploy from non complex builds, and the less possible dependant of external services
 
 This way, we can manage and provision anything we need on those nodes, but we also separates security concerns.
@@ -225,7 +226,7 @@ Actual layout
 -------------
 Overview of the project source code repositories
 +++++++++++++++++++++++++++++++++++++++++++++++++
-A project woill have at least 2 repositories
+A project will have at least 2 repositories
 - A repository where lives its sourcecode and deployment recipes
 
 This repository master branch consequently has the minimal following structure::
@@ -233,8 +234,8 @@ This repository master branch consequently has the minimal following structure::
     master
         |- what/ever/files/you/want
         |- .salt -> the salt deployment structure
-        |- .salt/top.sls -> the salt sls file to execute to deploy the project
-        |- .salt/standalone.sls -> the salt sls file to execute to deploy the
+        |- .salt/<env>/top.sls -> the salt sls file to execute to deploy the project
+        |- .salt/<env>/standalone.sls -> the salt sls file to execute to deploy the
                                    project in non full mode
 
 - A private repository with restricted access with any configuration data needed to deploy the
@@ -256,7 +257,7 @@ Overview of the paas directories
 /srv/projects/myproject/project/
     The local clone of the project branch from where we run in all modes.
     In other words, this is where the application runtimes files are.
-    In applicatio speaking
+    In application speaking
 
         * **django/python ala pip:** the virtualenv & root of runtime generated configuration files
         * **zope:** this will the root where the bin/instance will be lauched
@@ -264,78 +265,44 @@ Overview of the paas directories
         * **php webapps:** this will be your document root + all resources
         * **nodejs:** etc, this will be where nginx search for static files and
           where the nodejs app resides.
+
 /srv/projects/myproject/pillar
     The project specific states pillar tree local clone.
 
 /srv/projects/myproject/data/
     Where must live any persistent data
-/srv/projects/myproject/build/
-    Directory in which we can build or deal with extra builds steps
-    which need a temporary space to build on.
-/srv/projects/myproject/deploy/
-    A directory to copy files into to construct archives to be deployed in final
-    environments
 
-/srv/projects/myproject/releases/deployed/current/ -> /srv/projects/myproject/releases/deployed/<DATETIME>-<-UUID>/
-    In **cooking** mode, where all archives needed to be deployed must be stored
-/srv/projects/myproject/releases/deployed/<DATETIME>-<ANOTHER-UUID>/
-    A previous deployment archives directory
-/srv/projects/myproject/releases/failed/<DATETIME>-<ANOTHER-UUID>/
-    A previous failed deployment archives directory
 
 /srv/pillar/makina-projects/myproject -> /srv/projects/myproject/pillar
     pillar symlink
-/srv/salt/makina-projects/myproject -> /srv/projects/myproject/.salt/
+/srv/salt/makina-projects/myproject -> /srv/projects/myproject/.salt/<env>
     state tree project symlink
 
-The **.salt** directory will contain at least those following saltstack sls.
-Dont worry, those are generated the first time you issue the init_project procedure.
+The deployment procedure is as simple a running meta slses which in turn
+call your project ones contained in a subfolder of the **.salt** directory
+during the **install** phase.
 
-Each of those sls will run one common procedure (you choose a project installer and
-then you ll have this common procedure) and you can also write extra stuff to be
-done on that specific stage to perfect your deploment.
-
-All those sls files cannot be run with state.sls but via the mc_project.<method>
-functions. Indeed, they need a special environment which is only setted that
-way.
-
-/srv/projects/myproject/.salt/deploy.sls
+/srv/projects/myproject/.salt/dev/deploy.sls
     include the installer deploy procedure and maybe do extra
     stuff
-/srv/projects/myproject/.salt/archive.sls
+/srv/projects/myproject/.salt/dev/archive.sls
     include the installer archive procedure and maybe do extra
     stuff
-/srv/projects/myproject/.salt/initialization.sls
-    include the installer initialization procedure and maybe do extra
-    stuff
-/srv/projects/myproject/.salt/release-sync.sls
+/srv/projects/myproject/.salt/dev/release-sync.sls
     include the installer release sync procedure and maybe do extra
     stuff
-/srv/projects/myproject/.salt/configure.sls
+/srv/projects/myproject/.salt/dev/install.sls
     include the installer configure procedure and maybe do extra
-    stuff
-/srv/projects/myproject/.salt/build.sls
-    include the installer build procedure and maybe do extra
-    stuff
-/srv/projects/myproject/.salt/reconfigure.sls
-    include the installer reconfigure procedure and maybe do extra
-    stuff
-/srv/projects/myproject/.salt/activate.sls
-    include the installer activate procedure and maybe do extra
-    stuff
-/srv/projects/myproject/.salt/upgrade.sls
-    include the installer upgrade procedure and maybe do extra
-    stuff
 /srv/projects/myproject/.salt/rollback.sls
     include the installer rollback procedure and maybe do extra
     stuff
-/srv/projects/myproject/.salt/notification.sls
+/srv/projects/myproject/.salt/dev/notification.sls
     include the installer notification procedure and maybe do extra
     stuff
-/srv/projects/myproject/.salt/post_install.sls
-    include the installer post_install  procedure and maybe do extra
-    stuff
 
+The **.salt** directory will contain SLSs executed in lexicographical order.
+You will have to take exemple on another projects inside **makina-states/projects**
+or write your states.  Those slses are in charge to install your project.
 
 * The **persistent configuration directories**
 
@@ -348,6 +315,7 @@ way.
 
     /var
         Global data directories (data & logs) (/var)
+        Minus the package manager cache related directories
 
     /srv/projects/project/data
 
@@ -357,9 +325,6 @@ way.
             * drupal thumbnails
             * mongodb documentroot
             * ...
-
-* The **build working directory** where all build time procedure will operate before placing the results
-  in the **project** directory.
 
 * **Networkly speaking**, to enable switch of one container to another
   we have some solutions but in any case, **no ports** must be
@@ -550,64 +515,9 @@ Full procedure
 - project archive procedure
 - project initialization/sync procedure
 - project release-sync procedure
-- project configure procedure
-- project build procedure
-- project reconfiguration procedure
-- project activation procedure
-- project upgrade procedure
-- project bundle procedure
-- project post install procedure
+- project install procedure
 - In error: rollback procedure
 - In any cases (error, success):  project notification procedure
-
-In editable mode
-+++++++++++++++++
-- **modified**: **editable** deployment trigger procedure
-- **modified**: archive procedure is skipped
-- **modified**: release-sync procedure is skipped
-- project initialization/sync procedure
-- project configure procedure
-- project build procedure
-- **modified**: project reconfiguration procedure is skipped
-- project activation procedure
-- project upgrade procedure
-- **modified**: project bundle procedure is skipped
-- project post install procedure
-- In error: rollback procedure is skipped
-- In any cases (error, success):  project notification procedure
-
-In staging mode
-+++++++++++++++++
-- **modified**: **editable** deployment trigger procedure
-- **modified**: archive procedure is skipped
-- **modified**: release-sync procedure is skipped
-- project initialization/sync procedure
-- project configure procedure
-- project build procedure
-- project reconfiguration procedure
-- project activation procedure
-- project upgrade procedure
-- project bundle procedure
-- project post install procedure
-- In error: rollback procedure
-- In any cases (error, success):  project notification procedure
-
-In Final mode
-+++++++++++++++++
-- project deployment trigger procedure
-- project archive procedure
-- release-sync procedure
-- project initialization/sync procedure
-- project configure procedure
-- **modified**: project build procedure is skipped
-- project reconfiguration procedure
-- project activation procedure
-- project upgrade procedure
-- project bundle procedure
-- project post install procedure
-- In error: rollback procedure
-- In any cases (error, success):  project notification procedure
-
 
 IMPLEMENTATION: How a project is built and deployed
 ----------------------------------------------------
@@ -657,7 +567,7 @@ This will in order:
     - dns
     - firewall rules
     - defaultenv (dev, prod, preprod)
-    - compute mode override if any (dev, cooking, final)
+    - compute mode override if any (default_env inside /srv/salt/custom.sls)
 
 - Run the mastersalt highstate.
 - Send a mail to sysadmins and initial initer with the infos of the new platform access
@@ -694,21 +604,11 @@ This will in order:
     - ssh accces
     - root credentials
 
-Initialisation of a project in staging
+Initialisation of a project
 ++++++++++++++++++++++++++++++++++++++
-The code is not pull by production server it will be pushed with git to the environment ssh endpoint:
-
-- Trigggered by a push on the remotes
-- By the user itself, hence he as enougth access
-
-In staging mode, before each build:
-
-- we shutdown all services
-- We move the **project** directory to an archive directory
-- We create a new and empty **project** directory
-- We run
-
-After each build where produced files are putted inside the **project** directory, we will launch/restart/upgrade the project from there.
+- User create the project
+- Project directories are initialised
+- User receive an email with the git url to push on
 
 upgrade  of a project
 +++++++++++++++++++++
@@ -717,13 +617,8 @@ The code is not pull by production server it will be pushed with git to the envi
 - Triggered either by an automatted bot (jenkins)
 - By the user itself, hence he as enought access
 
-In staging mode, before each build
+In either way, the trigger is a git push.
 
-- we shutdown all services
-- We move the **project** directory to an arcchive directory
-- We create a new and empty **project** directory
-
-After each build where produced files are putted inside the **project** directory, we will launch/restart/upgrade the project from there.
 
 The nerve of the war: jinja macros and states, and execution modules
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -735,8 +630,10 @@ The project common data structure
 ++++++++++++++++++++++++++++++++++
 Overview
 ^^^^^^^^
-- to factorize the code but also keep track of specific settings, those macros will use a common data mapping structure.
-- all those macros will take as input the **configuration** data structure which is a mapping containing all variables and metadata about your project.
+- to factorize the configuration code but also keep track of specific settings, those macros will use a common data mapping structure
+  which is good to store defaults but override in a common manner variables via
+  pillar.
+- all those macros will take as input this **configuration** data structure which is a mapping containing all variables and metadata about your project.
 - this common data mapping is not copied over but passed always as a reference, this mean that you can change settings in a macro and see those changes in later macros.
 
 Local configuration state

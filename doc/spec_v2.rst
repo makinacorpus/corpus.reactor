@@ -541,7 +541,7 @@ mc_project.init_project(name, \*\*kwargs)
     any kwarg will override its counterpart in default project configuration
 
 mc_project.deploy_project(name, only=None)
-    (re)play entirely the project deployment while maybe limiting to a/some spefic
+    (re)play entirely the project deployment while maybe limiting to a/some specific
     step(s)
 
 mc_project.get_configuration(name)

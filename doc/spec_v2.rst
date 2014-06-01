@@ -252,7 +252,7 @@ the PAAS platform will construct according to the pushed code :).
 So you can even git push -f if you want to force things.
 
 Overview of the paas local directories
-+++++++++++++++++++++++++++******++++++
++++++++++++++++++++++++++++++++++++++++
 /srv/projects/myproject/project/
     The local clone of the project branch from where we run in all modes.
     In other words, this is where the application runtimes files are.

@@ -238,6 +238,13 @@ This repository master branch consequently has the minimal following structure::
         |                             trigger
         |- .salt/fixperms.sls      -> reset permissions script run at the end of
         |                            deployment
+        |- .salt/_modules          -> custom salt modules to add to local salt
+        |       /_runners             install
+        |       /_outputters
+        |       /_states
+        |       /_pillars
+        |       /_renderers
+        |
         |- .salt/00_DEPLOYMENT.sls -> all other slses will be executed in order
                                       and are to be provided by th users.
 
@@ -275,6 +282,8 @@ Overview of the paas local directories
     pillar symlink for salt integration
 /srv/salt/makina-projects/myproject -> /srv/projects/myproject/.salt/<env>
     state tree project symlink for salt integration
+/srv/salt/{_modules,runners,outputters,states,pilalrs,renderers}/*py -> /srv/projects/myproject/.salt/<typ>/mod.py
+    custom salt python execution modules
 
 The deployment procedure is as simple a running meta slses which in turn
 call your project ones contained in a subfolder of the **.salt** directory
@@ -552,6 +561,12 @@ mc_project.set_configuration(name, cfg=None, \*\*kwargs)
 
 mc_project.archive(name, \*args, \*\*kwargs)
     do the archive procedure
+
+mc_project.sync_hooks(name, \*args, \*\*kwargs)
+    regenerate git hooks
+
+mc_project.sync_modules(name, \*args, \*\*kwargs)
+    deploy salt modules inside .salt
 
 mc_project.release_sync(name, \*args, \*\*kwargs)
     do the release-sync procedure
